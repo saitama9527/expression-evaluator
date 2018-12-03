@@ -2,6 +2,8 @@ import abc
 import re
 
 
+
+
 class non_terminal:
     def __int__(self, name, val, element, visit):
         self.name = name
@@ -12,7 +14,7 @@ class non_terminal:
     def interpret(self, context):
         pass
 
-    def set_visit(self):
+    def set_visitor(self,*args,**kwargs):
         pass
 
     def visit(self):
@@ -62,7 +64,7 @@ class operator1(non_terminal):
 
     def interpret(self, context):
         if context[0] == '+' or context[0] == '-':
-            print(context[0])
+            #print(context[0])
             self.val = context[0]
             valid = 1
             rem_context = context[1:len(context)]
@@ -168,7 +170,7 @@ class term(non_terminal):
                 self.val = self.val / t.val
         valid = a
         rem_context = b
-        print(self.val)
+        #print(self.val)
         return valid, rem_context
 
 
@@ -177,6 +179,7 @@ class expression(non_terminal):
         self.name = 'expression'
 
     def interpret(self, context):
+        self.element = []
         # minus part
         s = 0
         t = minus()
@@ -189,6 +192,7 @@ class expression(non_terminal):
         t = term()
         a, b = t.interpret(b)
         self.val = s * t.val
+        self.element.append(t.val)
         # [operator1 term]*
 
         while a == 1 and b is not None:
@@ -199,29 +203,50 @@ class expression(non_terminal):
                     s = 1
                 elif t.val == '-':
                     s = 2
+            self.element.append(t.val)
             t = term()
             a, b = t.interpret(b)
+            self.element.append(t.val)
             if s == 1:
                 self.val = self.val + t.val
             elif s == 2:
                 self.val = self.val - t.val
         valid = 1
         rem_context = b
-        print(+self.val)
+        #print(+self.val)
         return valid, rem_context
 
-class vistor:
-    def structure_vistor(self):
+    def set_visitor(self,vstr,*args,**kwargs):
+        vstr.visit(self.element,self.val)
+
+
+    def visit(self):
         pass
-    def value_vistor(self):
+
+
+class visitor:
+    def visit(part):
         pass
+
+class structure_visitor(visitor):
+    def visit(self,part,val):
+        print("Structure:")
+        print("		 term :",part[0]
+              ,"\n		 op1 :",part[1]
+              ,"\n		 term :",part[2]
+              ,"\n	    expression : ",val)
+
+
+class value_visitor(visitor):
+    def visit(self,part,val):
+        print("Value:")
+        print("	    expression : ",val)
+
 
 e = expression()
 v, rc = e.interpret('123.22*234*2.3-23')
-
 e.set_visitor(structure_visitor())
 e.visit()
-
 e.set_visitor(value_visitor())
 e.visit()
 

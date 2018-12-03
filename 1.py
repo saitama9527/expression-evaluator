@@ -26,7 +26,7 @@ class minus(non_terminal):
 
     def interpret(self, context):
         if context[0] == '-':
-            print(context[0])
+            #print(context[0])
             valid = 1
             rem_context = context[1:]
         else:
@@ -40,8 +40,8 @@ class digit(non_terminal):
         self.name = 'digit'
 
     def interpret(self, context):
-        m = re.match('[0-9]', context[0])
-        if m is not None:
+        mat = re.match('[0-9]', context[0])
+        if mat is not None:
             self.val = context[0]
             if len(context) != 1:
                 valid = 1
@@ -105,57 +105,61 @@ class number(non_terminal):
         self.name = 'number'
 
     def interpret(self, context):
-        self.element = []
+        self.nelement = []
         ele = 0
         t = digit()
         av = ''
-        a, b = t.interpret(context)
-        if a == 1:
+        va, rmc = t.interpret(context)
+        if va == 1:
             av = av + t.val
-            self.element.append(t.val)
-            self.element[ele] = "\t\t digit1 : " + t.val
+            self.nelement.append(t.val)
+            self.nelement[ele] = "\t\t digit : " + t.val
             ele += 1
-        while a == 1:
+        while va == 1:
             t = digit()
-            a, b = t.interpret(b)
-            if a == 1:
+            va, rmc = t.interpret(rmc)
+            if va == 1:
                 av = av + t.val
-                self.element.append(t.val)
-                self.element[ele] = "\t\t digit2 : " + t.val
+                self.nelement.append(t.val)
+                self.nelement[ele] = "\t\t digit : " + t.val
                 ele += 1
-        if b is not None:
+        if rmc is not None:
             t = decpoint()
-            a, b = t.interpret(b)
-            if a == 1:
+            va, rmc = t.interpret(rmc)
+            if va == 1:
                 av = av + t.val
-                self.element.append(t.val)
-                self.element[ele] = "\t\t decpoint : " + t.val
+                self.nelement.append(t.val)
+                self.nelement[ele] = "\t\t decpoint : " + t.val
                 ele += 1
         else:
             av = av + t.val
-            self.element.append(t.val)
-            self.element[ele] = "\t\t digit4 : " + repr(t.val)
+            self.nelement.append(t.val)
+            self.nelement[ele] = "\t\t digit : " + t.val
             ele += 1
             valid = 0
             rem_context = None
             # print(av)
             self.val = float(av)
             return valid, rem_context
-        while a == 1:
+        while va == 1:
             t = digit()
-            a, b = t.interpret(b)
-            if a == 1 or b is None:
+            va, rmc = t.interpret(rmc)
+            if va == 1 or rmc is None:
                 # print(t.val)
                 av = av + t.val
+                self.nelement.append(t.val)
+                self.nelement[ele] = "\t\t digit : " + t.val
+                ele += 1
         valid = 1
-        rem_context = b
+        rem_context = rmc
         # print(av)
         self.val = float(av)
-        self.val = "\tnumber : " + repr(self.val)
+        self.pval = "\tnumber : " + repr(self.val)
         return valid, rem_context
 
     def set_visitor(self, vstr, *args, **kwargs):
-        vstr.visit(self.element, self.val)
+        vstr.visit(self.nelement, self.pval)
+
 
 
 class term(non_terminal):
@@ -163,31 +167,54 @@ class term(non_terminal):
         self.name = 'term'
 
     def interpret(self, context):
-        s = 0
+        self.telement = []
+        ele = 0
+        tmp = 0
         t = number()
-        a, b = t.interpret(context)
+        va, rmc = t.interpret(context)
         self.val = t.val
-        while a == 1 and b is not None:
+        t.val = int(t.val)
+        self.telement.append(t.val)
+        self.telement[ele] = "\t\t number : " + repr(t.val)
+        ele += 1
+        while va == 1 and rmc is not None:
             t = operator2()
-            a, b = t.interpret(b)
-            if a == 1:
+            va, rmc = t.interpret(rmc)
+            if va == 1:
                 if t.val == '*':
-                    s = 1
+                    tmp = 1
+                    self.telement.append(t.val)
+                    self.telement[ele] = "\t\t op2 : " + t.val
+                    ele += 1
                 else:
-                    s = 2
-            if a != 1:
-                a = 1
+                    tmp = 2
+                    self.telement.append(t.val)
+                    self.telement[ele] = "\t\t op2 : " + t.val
+                    ele += 1
+            if va != 1:
+                va = 1
                 break
             t = number()
-            a, b = t.interpret(b)
-            if s == 1:
+            va, rmc = t.interpret(rmc)
+            if tmp == 1:
                 self.val = self.val * t.val
-            elif s == 2:
+                t.val = int(t.val)
+                self.telement.append(t.val)
+                self.telement[ele] = "\t\t number : " + repr(t.val)
+                ele += 1
+            elif tmp == 2:
                 self.val = self.val / t.val
-        valid = a
-        rem_context = b
-        # print(self.val)
+                t.val = int(t.val)
+                self.telement.append(t.val)
+                self.telement[ele] = "\t\t number : " + repr(t.val)
+                ele += 1
+        valid = va
+        rem_context = rmc
+        self.pval = int(self.val)
+        self.pval = "\tterm : " + repr(self.pval)
         return valid, rem_context
+    def set_visitor(self, vstr, *args, **kwargs):
+        vstr.visit(self.telement, self.pval)
 
 
 class expression(non_terminal):
@@ -197,51 +224,51 @@ class expression(non_terminal):
     def interpret(self, context):
         self.element = []
         # minus part
-        s = 0
+        tmp = 0
         ele = 0
         t = minus()
-        a, b = t.interpret(context)
-        if a == 1:
-            s = -1
-            self.element.append(s)
-            self.element[ele] = "\t\t minus : " + repr(s)
+        va, rmc = t.interpret(context)
+        if va == 1:
+            tmp = -1
+            self.element.append(tmp)
+            self.element[ele] = "\t\t minus : " + repr(tmp)
             ele += 1
         else:
-            s = 1
+            tmp = 1
         # term part
         t = term()
-        a, b = t.interpret(b)
-        self.val = s * t.val
+        va, rmc = t.interpret(rmc)
+        self.val = tmp * t.val
         self.element.append(t.val)
         self.element[ele] = "\t\t term : " + repr(t.val)
         ele += 1
         # [operator1 term]*
 
-        while a == 1 and b is not None:
+        while va == 1 and rmc is not None:
             t = operator1()
-            a, b = t.interpret(b)
-            if a == 1:
+            va, rmc = t.interpret(rmc)
+            if va == 1:
                 if t.val == '+':
-                    s = 1
+                    tmp = 1
                 elif t.val == '-':
-                    s = 2
+                    tmp = 2
             self.element.append(t.val)
             self.element[ele] = "\t\t op1 : " + t.val
             ele += 1
             t = term()
-            a, b = t.interpret(b)
+            va, rmc = t.interpret(rmc)
             if t.val * 10 % 10 == 0:
                 if t.val / 10 <= 10:
                     t.val = int(t.val)
             self.element.append(t.val)
             self.element[ele] = "\t\t term : " + repr(t.val)
             ele += 1
-            if s == 1:
+            if tmp == 1:
                 self.val = self.val + t.val
-            elif s == 2:
+            elif tmp == 2:
                 self.val = self.val - t.val
         valid = 1
-        rem_context = b
+        rem_context = rmc
         self.val = "\texpression : " + repr(self.val)
         # print(+self.val)
         return valid, rem_context
@@ -272,9 +299,3 @@ class value_visitor(visitor):
         print(val)
 
 
-e = expression()
-v, rc = e.interpret('123.22*234*2.3-23')
-e.set_visitor(structure_visitor())
-e.visit()
-e.set_visitor(value_visitor())
-e.visit()

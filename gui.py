@@ -19,20 +19,23 @@ class Example(QWidget):
     def Init_UI(self):
         grid = QGridLayout()
         self.setLayout(grid)
-        self.iput = []
-        self.cnt = 1
-        self.zero = ''
+        self.inp = ''
         self.bkc = ''
 
-        self.setGeometry(300,300,400,300)
-        self.label = QLabel(self)
+        self.setGeometry(300,300,500,300)
+        self.pic = QLabel(self)
+        self.pic.setPixmap(QPixmap('self.JPG'))
+        self.pic.setGeometry(30,160,160,120)
+        self.label = QLabel(self.inp,self)
+        self.label.setStyleSheet("border: 1px solid black")
         self.label.setNum(0)
-        self.label.setGeometry(370,-40,500,100)
-        self.setWindowTitle('Learn PyQt5')
+        self.label.setAlignment(Qt.AlignRight)
+        self.label.setGeometry(20,20,460,20)
+        self.setWindowTitle('楊景勛_410421211-Calculator')
         self.lcd =  QLCDNumber()
-        self.lcd.setDigitCount(12)
+        self.lcd.setDigitCount(15)
         grid.addWidget(self.lcd,0,0,3,0)
-        grid.setSpacing(10)
+        grid.setSpacing(5)
 
         names = ['Clr', 'Bc', '', 'Close',
                  '7', '8', '9', '/',
@@ -56,53 +59,52 @@ class Example(QWidget):
         self.geox = 370
             #self.iput[0] = self.iput[0]+self.iput[i]
             #i = i+1
-        ls = ['/', '*', '-', '=', '+']
+        ls = ['/', '*', '-', '+']
         if sender == 'Clr':
-            self.iput.clear()
-            self.geox = 370
-            self.label.setGeometry(self.geox, -40, 500, 100)
             self.label.setNum(0)
-            self.cnt = 1
-            i = 0
             self.lcd.display(0)
-            self.zero = ''
+            self.inp = ''
+
 
         elif sender == '=':
             e = exp.expression()
-            v, rc = e.interpret(self.iput[0])
-            print(e.val)
-            self.lcd.display(e.val)
+            for i in range(0, len(self.inp)-1):
+                if self.inp[i] in ls:
+                    if self.inp[i-1] in ls:
+                        print(v)
+                        v = 0
+                    else:
+                        v = 1
+            if v == 0:
+                self.lcd.display('Error')
+            else:
+               # print(e.val)
+               # print(v)
+                v, rc = e.interpret(self.inp)
+                self.lcd.display(e.val)
 
         elif sender == 'Bc':
-            self.cnt = self.cnt -1
-            print(self.cnt-1)
-            self.bkc = self.iput[0]
-            #self.iput.clear()
-            #self.iput.append(self.bkc)
-            self.iput[self.cnt-1] = ''
-            self.iput[0] = self.zero + self.bkc[1:self.cnt-1]
-            print(self.iput[0])
-            print(self.bkc)
-            self.label.setGeometry(self.geox-8.4*(self.cnt-2), -40, 500, 100)
-            self.label.setText(self.iput[0])
+            self.bkc = ''
+            for i in range(0 , len(self.inp)-1):
+                self.bkc += self.inp[i]
 
+            self.inp = self.bkc
+            self.label.setText(self.inp)
 
-        elif self.cnt==1:
-            self.iput.append(sender)
-            self.label.setText(self.iput[0])
-            self.zero  = self.iput[0]
-            self.cnt = self.cnt + 1
+        elif sender == 'Close':
+            quit()
 
-        elif self.cnt!=1:
-            self.iput.append(sender)
-            #for i in range(self.cnt-1,self.cnt):
-            self.iput[0] = self.iput[0]+self.iput[self.cnt-1]
-            self.geox = self.geox - 8.4*(self.cnt-1)
-            self.label.setGeometry(self.geox, -40, 500, 100)
+       # elif sender in ls:
+          #  if self.inp[len(self.inp) - 1] in ls:
+            #    self.label.setText('Error')
 
+            #else:
+                #self.inp += str(sender)
+                #self.label.setText(self.inp)
 
-            self.label.setText(self.iput[0])
-            self.cnt = self.cnt + 1
+        else:
+            self.inp += str(sender)
+            self.label.setText(self.inp)
 
 
 if __name__ == '__main__':

@@ -68,13 +68,24 @@ class Example(QWidget):
 
         elif sender == '=':
             e = exp.expression()
+            decount = 0
             for i in range(0, len(self.inp)-1):
                 if self.inp[i] in ls:
                     if self.inp[i-1] in ls:
-                        print(v)
+                        #print(v)
                         v = 0
+                        break
                     else:
                         v = 1
+
+            for p in range(0, len(self.inp) - 1):
+                if self.inp[p+1] in ls:
+                    decount = 0
+                if self.inp[p] == '.':
+                    decount += 1
+                    if decount >= 2:
+                        v = 0
+
             if v == 0:
                 self.lcd.display('Error')
             else:
